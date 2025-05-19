@@ -1,21 +1,26 @@
 [
   {
-    "file": "csv-viewer.html",
+    "file": "pages/csv-viewer.html",
     "judul": "CSV Viewer",
     "deskripsi": "CSV Viewer sederhana dengan SUM, COUNT, SUM (Time)."
   },
   {
-    "file": "multi-timer.html",
+    "file": "pages/multi-timer.html",
     "judul": "Multi Timer",
     "deskripsi": "Multi Timer sederhana untuk menghitung waktu berjalan. Mendukung beberapa timer sekaligus."
   },
   {
-    "file": "mde.html",
+    "file": "pages/mde.html",
     "judul": "Minimal Distraction Editor",
     "deskripsi": "Editor sederhana untuk membantu fokus."
   },  
   {
-    "file": "tentang_kami.html",
+    "file": "pages/tsv_csv_xliff.html",
+    "judul": "Minimal Distraction Editor",
+    "deskripsi": "Editor sederhana untuk membantu fokus."
+  },
+  {
+    "file": "pages/tentang_kami.html",
     "judul": "Tentang Kami",
     "deskripsi": "Pelajari lebih lanjut tentang sistem ini."
   }
