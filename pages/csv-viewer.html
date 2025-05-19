@@ -35,6 +35,30 @@
             pointer-events: none; /* Pastikan latar belakang tidak menangkap event mouse */
         }
 
+                /* Tombol Floating */
+        .floating-button {
+            position: fixed; /* Tetap di posisi yang sama saat scroll */
+            bottom: 20px; /* Jarak dari bawah */
+            left: 20px; /* Jarak dari kiri */
+            background-color: #007bff; /* Warna latar tombol */
+            color: white; /* Warna teks */
+            padding: 12px 18px;
+            border-radius: 30px; /* Membuatnya lebih bulat */
+            text-decoration: none;
+            font-size: 1em;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000; /* Memastikan tombol di atas elemen lain */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .floating-button:hover {
+            background-color: #0056b3; /* Warna saat hover */
+            transform: translateY(-2px); /* Sedikit naik saat hover */
+        }
+        .floating-button:active {
+            transform: translateY(0px); /* Kembali ke posisi semula saat diklik */
+        }
+
         .container {
             background-color: #fff; 
             padding: 25px;
@@ -557,6 +581,8 @@
             });
         }
     </script>
-
+<a href="https://work.ndaruwibowo.my.id" class="floating-button" target="_blank" rel="noopener noreferrer">
+    Ke halaman utama
+</a>
 </body>
 </html>
