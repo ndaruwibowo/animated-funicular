@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penampil CSV Multifitur</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+            position: relative; 
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed; /* Tetap di viewport, tidak ikut scroll */
+            left: -50%; 
+            top: -50%;
+            width: 200%; 
+            height: 200%;
+            z-index: -1; /* Letakkan di belakang semua konten lain */
+            
+            background-image: url('https://transkomunika.com/assets/uploads/media-uploader/logo-transkomunika1662368610.png');
+            /* Ukuran asli gambar: 200x58px. Spasi contoh: 80px horizontal, 100px vertikal */
+            background-size: 200px;
+            background-repeat: repeat; 
+            
+            transform: rotate(45deg); /* Rotasi 45 derajat sesuai permintaan */
+            
+            opacity: 0.15; /* Sesuaikan opasitas watermark (0.05 - 0.15) */
+            pointer-events: none; /* Pastikan latar belakang tidak menangkap event mouse */
+        }
+
+        .container {
+            background-color: #fff; 
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-left: auto;
+            margin-right: auto;
+            position: relative; 
+            z-index: 1; 
+        }
+
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 20px;
+        }
+
+        .controls-area {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background-color: #f0f2f5;
+            border-radius: 6px;
+            gap: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .controls-area > div {
+            display: flex;
+            align-items: center;
+        }
+
+        .controls-area label {
+            margin-right: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .controls-area select, .controls-area input[type="file"] {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.95em;
+            background-color: #fff;
+        }
+        .controls-area input[type="file"]{ margin: 0; cursor: pointer; }
+        .controls-area select { cursor: pointer; }
+
+        #custom-table-area { margin-top: 10px; position: relative; z-index: 1; }
+
+        #top-scroll-ui {
+            height: 15px; overflow-x: auto; overflow-y: hidden;
+            display: none; margin-bottom: 5px; background-color: #e9ecef;
+        }
+        #top-scroll-ui::-webkit-scrollbar { height: 10px; }
+        #top-scroll-ui::-webkit-scrollbar-thumb { background-color: #adb5bd; border-radius: 5px; border: 2px solid #e9ecef; }
+        #top-scroll-ui::-webkit-scrollbar-thumb:hover { background-color: #6c757d; }
+        #top-scroll-ui::-webkit-scrollbar-track { background-color: #e9ecef; border-radius: 5px; }
+        #top-scroll-content-sizer { height: 1px; }
+
+        #table-scroll-wrapper {
+            overflow-x: auto; width: 100%; max-height: 70vh;
+            overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px 15px; border: 1px solid #dee2e6; text-align: left; white-space: nowrap; }
+
+        thead th {
+            background-color: #e9ecef; color: #495057; cursor: pointer; user-select: none;
+            position: sticky; top: 0; z-index: 10;
+        }
+        thead th:hover { background-color: #ced4da; }
+        thead th .sort-indicator { float: right; margin-left: 8px; font-size: 0.8em; }
+
+        #filterRow td {
+            padding: 6px 10px; background-color: #f8f9fa; position: sticky;
+            top: 40px; /* Akan disesuaikan JS */
+            z-index: 9; border-bottom: 1px solid #ced4da;
+        }
+        #filterRow input[type="text"] {
+            width: 100%; padding: 6px 8px; border: 1px solid #ced4da;
+            border-radius: 4px; box-sizing: border-box; font-size: 0.9em;
+        }
+        #filterRow input[type="text"]:focus {
+            border-color: #80bdff; outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        tbody tr:hover { background-color: #e9ecef; }
+
+        #summaryRow td {
+            position: sticky; bottom: 0; background-color: #e0e7ef; color: #343a40;
+            z-index: 10; font-weight: bold; font-size: 0.9em;
+            border-top: 2px solid #adb5bd; padding: 8px 15px;
+        }
+
+        #loader {
+            display: none; text-align: center; padding: 20px;
+            font-size: 1.2em; color: #495057;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Penampil CSV Multifitur</h1>
+
+        <div class="controls-area">
+            <div>
+                <label for="summaryTypeSelect">Ringkasan Kolom:</label>
+                <select id="summaryTypeSelect">
+                    <option value="none">Sembunyikan</option>
+                    <option value="count">Tampilkan Count</option>
+                    <option value="sum">Tampilkan Sum Angka</option>
+                    <option value="sum_time">Tampilkan Sum Waktu</option>
+                </select>
+            </div>
+            <input type="file" id="csvFileInput" accept=".csv" title="Pilih file CSV untuk ditampilkan">
+        </div>
+
+        <div id="loader">Memproses... Mohon tunggu.</div>
+
+        <div id="custom-table-area">
+            <div id="top-scroll-ui">
+                <div id="top-scroll-content-sizer"></div>
+            </div>
+            <div id="table-scroll-wrapper">
+                <table id="csvTable">
+                    <thead id="csvThead">
+                        <tr id="tableHeader"></tr>
+                        <tr id="filterRow"></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                    <tfoot id="csvTfoot">
+                        <tr id="summaryRow" style="display: none;"></tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const csvFileInput = document.getElementById('csvFileInput');
+        const summaryTypeSelect = document.getElementById('summaryTypeSelect');
+        const csvTable = document.getElementById('csvTable');
+        const tableHeader = document.getElementById('tableHeader');
+        const filterRow = document.getElementById('filterRow');
+        const tableBody = document.getElementById('tableBody');
+        const summaryRow = document.getElementById('summaryRow');
+        const loader = document.getElementById('loader');
+
+        const topScrollUI = document.getElementById('top-scroll-ui');
+        const topScrollContentSizer = document.getElementById('top-scroll-content-sizer');
+        const tableScrollWrapper = document.getElementById('table-scroll-wrapper');
+
+        let rawCsvData = [];
+        let columnHeaders = [];
+        let displayData = [];
+        let sortDirections = [];
+        let filterInputs = [];
+        let debounceTimer;
+        let isSyncingScroll = false;
+        let currentSummaryType = 'none';
+
+        function adjustFilterRowStickyTop() {
+            const headerElement = tableHeader.querySelector('th');
+            if (headerElement) {
+                const headerHeight = headerElement.offsetHeight;
+                if (filterRow) filterRow.style.top = headerHeight + 'px';
+            } else if (tableHeader && tableHeader.offsetHeight > 0) {
+                 if (filterRow) filterRow.style.top = tableHeader.offsetHeight + 'px';
+            } else {
+                 if (filterRow) filterRow.style.top = '40px';
+            }
+        }
+
+        function updateAndShowHideTopScroll() {
+            if (!tableScrollWrapper || !topScrollUI || !topScrollContentSizer) return;
+            try {
+                const scrollWidth = tableScrollWrapper.scrollWidth;
+                const clientWidth = tableScrollWrapper.clientWidth;
+                topScrollContentSizer.style.width = scrollWidth + 'px';
+                topScrollUI.style.display = (scrollWidth > clientWidth + 1) ? 'block' : 'none';
+            } catch (e) {
+                console.error("Error updating top scrollbar:", e);
+                if (topScrollUI) topScrollUI.style.display = 'none';
+            }
+        }
+
+        function setupScrollSync() {
+            if (!tableScrollWrapper || !topScrollUI) return;
+            tableScrollWrapper.addEventListener('scroll', () => {
+                if (isSyncingScroll || !topScrollUI) return;
+                isSyncingScroll = true;
+                topScrollUI.scrollLeft = tableScrollWrapper.scrollLeft;
+                requestAnimationFrame(() => { isSyncingScroll = false; });
+            });
+            topScrollUI.addEventListener('scroll', () => {
+                if (isSyncingScroll || !tableScrollWrapper) return;
+                isSyncingScroll = true;
+                tableScrollWrapper.scrollLeft = topScrollUI.scrollLeft;
+                requestAnimationFrame(() => { isSyncingScroll = false; });
+            });
+        }
+        
+        function formatLargeNumber(num, precision = 2) {
+            if (num === null || num === undefined || isNaN(num) || !isFinite(num)) return 'N/A';
+            const absNum = Math.abs(num);
+            const sign = num < 0 ? "-" : "";
+            const tiers = [
+                { limit: 1e18, divisor: 1e18, suffix: ' Kuintiliun' }, { limit: 1e15, divisor: 1e15, suffix: ' Kuadriliun' },
+                { limit: 1e12, divisor: 1e12, suffix: ' Triliun' },    { limit: 1e9,  divisor: 1e9,  suffix: ' Miliar' },
+                { limit: 1e6,  divisor: 1e6,  suffix: ' Juta' },       { limit: 1e3,  divisor: 1e3,  suffix: ' Ribu' }
+            ];
+            for (const tier of tiers) {
+                if (absNum >= tier.limit) {
+                    return sign + (num / tier.divisor).toFixed(precision) + tier.suffix;
+                }
+            }
+            return sign + num.toLocaleString(undefined, {
+                minimumFractionDigits: (num % 1 === 0) ? 0 : 0, maximumFractionDigits: precision
+            });
+        }
+
+        function parseTimeToSeconds(timeStr) {
+            if (timeStr === null || timeStr === undefined || String(timeStr).trim() === '') return null;
+            const str = String(timeStr).trim();
+            const parts = str.split(':').map(part => parseInt(part, 10));
+
+            for (const part of parts) { // Cek apakah setiap bagian adalah angka valid
+                if (isNaN(part) || part < 0) return null; // Angka negatif tidak valid untuk komponen waktu
+            }
+
+            if (parts.length === 3) { // HH:MM:SS
+                return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+            } else if (parts.length === 2) { // MM:SS
+                return (parts[0] * 60) + parts[1];
+            } else if (parts.length === 1 && !isNaN(parts[0])) { // SS (angka tunggal dianggap detik)
+                return parts[0];
+            }
+            return null; // Format tidak dikenali
+        }
+
+        function formatSecondsToTime(totalSeconds, verbose = false) {
+            if (isNaN(totalSeconds) || totalSeconds < 0) return verbose ? 'Tidak valid' : 'N/A';
+            
+            const sign = totalSeconds < 0 ? "-" : ""; // Meskipun sudah dicek < 0, ini untuk konsistensi
+            const absTotalSeconds = Math.abs(totalSeconds);
+
+            const h = Math.floor(absTotalSeconds / 3600);
+            const m = Math.floor((absTotalSeconds % 3600) / 60);
+            const s = Math.floor(absTotalSeconds % 60); // Gunakan Math.floor untuk detik juga
+
+            if (verbose) {
+                let result = sign;
+                if (h > 0) result += `${h} jam `;
+                if (m > 0 || (h > 0 && m === 0) ) result += `${m} menit `; // Tampilkan menit jika ada jam atau menit > 0
+                result += `${s} detik`;
+                return result.trim() === "" || result.trim() === "-" ? (sign + "0 detik") : result.trim();
+            } else {
+                const pad = (num) => String(num).padStart(2, '0');
+                // Untuk jam, tidak perlu pad jika bisa lebih dari 2 digit
+                return `${sign}${h}:${pad(m)}:${pad(s)}`;
+            }
+        }
+
+        csvFileInput.addEventListener('change', handleFile);
+        summaryTypeSelect.addEventListener('change', (event) => {
+            currentSummaryType = event.target.value;
+            updateSummaryRow();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setupScrollSync();
+            if (summaryTypeSelect) currentSummaryType = summaryTypeSelect.value;
+            updateSummaryRow();
+        });
+
+        window.addEventListener('resize', () => {
+            requestAnimationFrame(() => {
+                adjustFilterRowStickyTop();
+                updateAndShowHideTopScroll();
+            });
+        });
+
+        function showLoader(show) {
+            if (loader) loader.style.display = show ? 'block' : 'none';
+            const tableArea = document.getElementById('custom-table-area');
+            if (tableArea) tableArea.style.visibility = show ? 'hidden' : 'visible';
+        }
+
+        async function handleFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showLoader(true);
+                await new Promise(resolve => setTimeout(resolve, 50));
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const text = e.target.result;
+                        processCSV(text);
+                    } catch (error) {
+                        console.error("Error processing CSV:", error);
+                        alert("Terjadi kesalahan saat memproses file CSV.");
+                    } finally {
+                        showLoader(false);
+                        requestAnimationFrame(adjustFilterRowStickyTop);
+                    }
+                };
+                reader.onerror = function() { alert('Gagal membaca file.'); showLoader(false); }
+                reader.readAsText(file);
+            }
+        }
+
+        function processCSV(csvText) {
+            rawCsvData = []; columnHeaders = []; displayData = [];
+            sortDirections = []; filterInputs = [];
+            
+            if (tableHeader) tableHeader.innerHTML = '';
+            if (filterRow) filterRow.innerHTML = '';
+            if (tableBody) tableBody.innerHTML = '';
+            if (summaryRow) summaryRow.innerHTML = '';
+
+            const lines = csvText.trim().split('\n');
+            if (lines.length === 0) {
+                alert('File CSV kosong atau format tidak valid.');
+                updateAndShowHideTopScroll(); updateSummaryRow(); return;
+            }
+
+            columnHeaders = lines[0].split(',').map(header => header.trim());
+            columnHeaders.forEach((headerText, index) => {
+                if (tableHeader) {
+                    const th = document.createElement('th');
+                    th.textContent = headerText;
+                    const indicator = document.createElement('span');
+                    indicator.classList.add('sort-indicator');
+                    th.appendChild(indicator);
+                    th.addEventListener('click', () => sortTable(index));
+                    tableHeader.appendChild(th);
+                }
+                sortDirections.push(null);
+                if (filterRow) {
+                    const filterTd = document.createElement('td');
+                    const input = document.createElement('input');
+                    input.type = 'text'; input.placeholder = `Filter "${headerText}"...`;
+                    input.ariaLabel = `Filter kolom ${headerText}`;
+                    input.addEventListener('input', () => {
+                        clearTimeout(debounceTimer);
+                        debounceTimer = setTimeout(updateDisplayData, 350);
+                    });
+                    filterTd.appendChild(input); filterRow.appendChild(filterTd);
+                    filterInputs.push(input);
+                }
+                if (summaryRow) summaryRow.appendChild(document.createElement('td'));
+            });
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i]; if (line.trim() === '') continue;
+                const values = line.split(',').map(value => value.trim());
+                if (values.length === columnHeaders.length) rawCsvData.push([...values]);
+                else console.warn(`Baris ${i+1} (data: "${line}") memiliki ${values.length} kolom, diharapkan ${columnHeaders.length}. Baris ini dilewati.`);
+            }
+            updateDisplayData();
+        }
+
+        function updateSummaryRow() {
+            if (!summaryRow) return;
+            if (columnHeaders.length === 0) {
+                summaryRow.style.display = 'none'; summaryRow.innerHTML = ''; return;
+            }
+            if (summaryRow.children.length !== columnHeaders.length) {
+                summaryRow.innerHTML = '';
+                columnHeaders.forEach(() => summaryRow.appendChild(document.createElement('td')));
+            }
+            if (currentSummaryType === 'none' || displayData.length === 0) {
+                summaryRow.style.display = 'none'; return;
+            }
+            summaryRow.style.display = '';
+
+            columnHeaders.forEach((_, columnIndex) => {
+                const summaryCell = summaryRow.children[columnIndex];
+                if (!summaryCell) return;
+
+                if (currentSummaryType === 'count') {
+                    let nonBlankCells = 0;
+                    displayData.forEach(row => {
+                        const cellValue = row[columnIndex];
+                        if (cellValue !== null && cellValue !== undefined && String(cellValue).trim() !== '') nonBlankCells++;
+                    });
+                    summaryCell.textContent = `${nonBlankCells}`;
+                    summaryCell.title = `Count: ${nonBlankCells}`;
+                } else if (currentSummaryType === 'sum') {
+                    let sum = 0; let numericCount = 0;
+                    displayData.forEach(row => {
+                        const cellValue = row[columnIndex];
+                        const num = parseFloat(cellValue);
+                        if (!isNaN(num) && isFinite(num)) { sum += num; numericCount++; }
+                    });
+                    if (numericCount > 0) {
+                        summaryCell.textContent = formatLargeNumber(sum);
+                        summaryCell.title = `Sum Angka: ${sum.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})}`;
+                    } else { summaryCell.textContent = 'N/A'; summaryCell.title = 'Sum Angka: N/A'; }
+                } else if (currentSummaryType === 'sum_time') {
+                    let totalSecondsInColumn = 0; let validTimeEntries = 0;
+                    displayData.forEach(row => {
+                        const cellValue = row[columnIndex];
+                        const seconds = parseTimeToSeconds(cellValue);
+                        if (seconds !== null && !isNaN(seconds)) {
+                            totalSecondsInColumn += seconds; validTimeEntries++;
+                        }
+                    });
+                    if (validTimeEntries > 0) {
+                        summaryCell.textContent = formatSecondsToTime(totalSecondsInColumn);
+                        summaryCell.title = `Total Waktu: ${formatSecondsToTime(totalSecondsInColumn, true)}`;
+                    } else { summaryCell.textContent = 'N/A'; summaryCell.title = 'Total Waktu: N/A'; }
+                } else {
+                    summaryCell.textContent = '';
+                }
+            });
+        }
+
+        function updateDisplayData() {
+            showLoader(true);
+            setTimeout(() => {
+                let filteredData = rawCsvData.filter(row => {
+                    for (let i = 0; i < filterInputs.length; i++) {
+                        if (!filterInputs[i]) continue;
+                        let filterText = filterInputs[i].value.trim();
+                        if (filterText === '') continue;
+                        const cellValue = String(row[i] || '').toLowerCase();
+                        if (filterText.startsWith('!')) {
+                            const excludeText = filterText.substring(1).toLowerCase();
+                            if (excludeText === '') continue;
+                            if (cellValue.includes(excludeText)) return false;
+                        } else {
+                            const includeText = filterText.toLowerCase();
+                            if (!cellValue.includes(includeText)) return false;
+                        }
+                    }
+                    return true;
+                });
+
+                let sortedColumnIndex = -1; let currentSortDirection = null;
+                for (let i = 0; i < sortDirections.length; i++) {
+                    if (sortDirections[i]) { sortedColumnIndex = i; currentSortDirection = sortDirections[i]; break; }
+                }
+
+                if (sortedColumnIndex !== -1 && currentSortDirection && filteredData.length > 0) {
+                    filteredData.sort((a, b) => {
+                        const valA = (a && a.length > sortedColumnIndex) ? parseSortValue(a[sortedColumnIndex]) : null;
+                        const valB = (b && b.length > sortedColumnIndex) ? parseSortValue(b[sortedColumnIndex]) : null;
+                        if (valA === null || valA === undefined) return 1;
+                        if (valB === null || valB === undefined) return -1;
+                        if (typeof valA === 'number' && typeof valB === 'number') {
+                            return currentSortDirection === 'asc' ? valA - valB : valB - valA;
+                        } else if (typeof valA === 'string' && typeof valB === 'string') {
+                            return currentSortDirection === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                        } else {
+                            if (typeof valA === 'number') return -1; if (typeof valB === 'number') return 1;
+                            const strA = String(valA).toLowerCase(); const strB = String(valB).toLowerCase();
+                            return currentSortDirection === 'asc' ? strA.localeCompare(strB) : strB.localeCompare(strA);
+                        }
+                    });
+                }
+                displayData = filteredData;
+                renderTable(displayData);
+                updateSummaryRow();
+                showLoader(false);
+            }, 50);
+        }
+
+        function renderTable(data) {
+            if (tableBody) tableBody.innerHTML = ''; else return;
+            const fragment = document.createDocumentFragment();
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                row.forEach(cellText => { const td = document.createElement('td'); td.textContent = cellText; tr.appendChild(td); });
+                fragment.appendChild(tr);
+            });
+            tableBody.appendChild(fragment);
+            requestAnimationFrame(updateAndShowHideTopScroll);
+        }
+
+        function parseSortValue(value) {
+            if (value === null || value === undefined || String(value).trim() === "") return null;
+            const trimmedValue = String(value).trim();
+            const num = parseFloat(trimmedValue);
+            if (!isNaN(num) && isFinite(num) && num.toString() === trimmedValue) return num;
+            return trimmedValue.toLowerCase();
+        }
+
+        function sortTable(columnIndex) {
+            if (columnIndex < 0 || columnIndex >= sortDirections.length) return;
+            const currentDirection = sortDirections[columnIndex];
+            let newDirection;
+            if (currentDirection === 'asc') newDirection = 'desc';
+            else if (currentDirection === 'desc') newDirection = 'asc';
+            else newDirection = 'asc';
+            sortDirections[columnIndex] = newDirection;
+            updateSortIndicators(); updateDisplayData();
+        }
+
+        function updateSortIndicators() {
+            if (!tableHeader) return;
+            const ths = tableHeader.querySelectorAll('th');
+            ths.forEach((th, index) => {
+                const indicator = th.querySelector('.sort-indicator');
+                if (!indicator) return;
+                if (index < sortDirections.length) {
+                    if (sortDirections[index] === 'asc') indicator.textContent = '▲';
+                    else if (sortDirections[index] === 'desc') indicator.textContent = '▼';
+                    else indicator.textContent = '';
+                } else indicator.textContent = '';
+            });
+        }
+    </script>
+
+</body>
+</html>
