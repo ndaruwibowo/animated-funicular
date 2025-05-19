@@ -16,8 +16,8 @@
   },  
   {
     "file": "pages/tsv_csv_xliff.html",
-    "judul": "Minimal Distraction Editor",
-    "deskripsi": "Editor sederhana untuk membantu fokus."
+    "judul": "Konverter TSV/CSV ke XLIFF 1.2",
+    "deskripsi": "Konverter tsv/csv ke XLIFF untuk memudahkan penerjemahan."
   },
   {
     "file": "pages/tentang_kami.html",
