@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konverter TSV/CSV ke XLIFF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" xintegrity="sha512-SGWgusfDqFqtEM8hGt1czClqG1aTqLChNfLpL/c_2t1_s//_1_Nq1XhHj/L7R6B+fI/R3w+2w/uY/JtM+bBw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            margin: 20px;
+            background-color: #f0f2f5;
+            color: #1c1e21;
+            line-height: 1.5;
+        }
+        .container {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 30px auto;
+        }
+        h1 {
+            color: #1877f2; /* Facebook blue */
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 24px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4b4f56;
+        }
+        input[type="file"],
+        input[type="text"],
+        select {
+            width: 100%; /* Full width */
+            padding: 10px 12px;
+            margin-bottom: 18px;
+            border: 1px solid #ccd0d5;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="file"] {
+            padding: 8px 12px; /* Slightly different padding for file input */
+        }
+        input[type="file"]:hover {
+            border-color: #8a8d91;
+        }
+        input[type="text"]:focus,
+        select:focus {
+            border-color: #1877f2;
+            box-shadow: 0 0 0 2px rgba(24, 119, 242, 0.2);
+            outline: none;
+        }
+        button {
+            background-color: #1877f2;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            width: 100%; /* Full width button */
+            margin-top: 10px;
+        }
+        button:hover:not(:disabled) {
+            background-color: #166fe5;
+        }
+        button:disabled {
+            background-color: #e4e6eb;
+            color: #bcc0c4;
+            cursor: not-allowed;
+        }
+        pre {
+            background-color: #f0f2f5;
+            padding: 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+            border: 1px solid #dddfe2;
+        }
+        .info {
+            background-color: #e7f3ff; /* Lighter blue */
+            border-left: 5px solid #1877f2;
+            margin-bottom: 20px;
+            padding: 12px 18px;
+            border-radius: 6px;
+        }
+        .info p, .info ol, .info ul {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .info strong {
+            color: #1c1e21;
+        }
+        .error {
+            color: #fa383e; /* Red for errors */
+            margin-top: 10px;
+            font-size: 14px;
+            background-color: #ffebee; /* Softer red background */
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #f44336; /* More distinct error border */
+        }
+        .status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #1c1e21;
+        }
+        .column-mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f7f8fa;
+            border-radius: 6px;
+            border: 1px solid #dddfe2;
+        }
+        .column-mapping div {
+            display: flex;
+            flex-direction: column;
+        }
+        h2 {
+            font-size: 18px;
+            color: #1c1e21;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #dddfe2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Konverter TSV/CSV ke XLIFF 1.2</h1>
+
+        <div class="info">
+            <p><strong>Petunjuk Penggunaan:</strong></p>
+            <ol>
+                <li>Pilih file TSV atau CSV Anda. File <strong>harus</strong> memiliki baris header (nama kolom) di baris pertama.</li>
+                <li>Masukkan kode bahasa sumber (misalnya, 'en' untuk Bahasa Inggris).</li>
+                <li>Masukkan kode bahasa target (misalnya, 'id' untuk Bahasa Indonesia).</li>
+                <li>Tentukan nama kolom dari file Anda yang sesuai dengan 'ID Unit', 'Teks Sumber', 'Teks Target', dan 'Catatan' (opsional). Pastikan nama kolom ini persis seperti yang ada di file Anda (case-sensitive).</li>
+                <li>Klik tombol "Konversi ke XLIFF". Tombol ini akan aktif setelah file berhasil diproses.</li>
+                <li>File XLIFF (.xlf) akan diunduh secara otomatis.</li>
+            </ol>
+            <p><strong>Contoh Struktur Kolom yang Diharapkan di TSV/CSV:</strong></p>
+            <pre>
+Key,EnglishSource,IndonesianTarget,Description
+greeting,Hello,Halo,A simple greeting
+farewell,Goodbye,Sampai jumpa,A common farewell
+            </pre>
+            <p>Pada contoh di atas, Anda akan memetakan:</p>
+            <ul>
+                <li>ID Unit: Key</li>
+                <li>Teks Sumber: EnglishSource</li>
+                <li>Teks Target: IndonesianTarget</li>
+                <li>Catatan: Description</li>
+            </ul>
+        </div>
+
+        <label for="fileInput">Pilih File TSV/CSV:</label>
+        <input type="file" id="fileInput" accept=".tsv,.csv,.txt">
+
+        <label for="sourceLang">Kode Bahasa Sumber (mis: en-US, en):</label>
+        <input type="text" id="sourceLang" value="en">
+
+        <label for="targetLang">Kode Bahasa Target (mis: id-ID, id):</label>
+        <input type="text" id="targetLang" value="id">
+
+        <label for="outputFileName">Nama File XLIFF Output (tanpa ekstensi):</label>
+        <input type="text" id="outputFileName" value="translation">
+
+        <h2>Pemetaan Kolom</h2>
+        <div class="column-mapping">
+            <div>
+                <label for="idColumn">Nama Kolom untuk ID Unit:</label>
+                <input type="text" id="idColumn" value="id">
+            </div>
+            <div>
+                <label for="sourceColumn">Nama Kolom untuk Teks Sumber:</label>
+                <input type="text" id="sourceColumn" value="source">
+            </div>
+            <div>
+                <label for="targetColumn">Nama Kolom untuk Teks Target:</label>
+                <input type="text" id="targetColumn" value="target">
+            </div>
+            <div>
+                <label for="noteColumn">Nama Kolom untuk Catatan (Opsional):</label>
+                <input type="text" id="noteColumn" value="note">
+            </div>
+        </div>
+
+        <button id="convertButton" disabled>Konversi ke XLIFF</button>
+        <p id="status" class="status"></p>
+        <p id="errorMessage" class="error" style="display: none;"></p> </div>
+
+    <script>
+        // Ambil referensi ke elemen-elemen DOM
+        const fileInput = document.getElementById('fileInput');
+        const sourceLangInput = document.getElementById('sourceLang');
+        const targetLangInput = document.getElementById('targetLang');
+        const outputFileNameInput = document.getElementById('outputFileName');
+        const idColumnInput = document.getElementById('idColumn');
+        const sourceColumnInput = document.getElementById('sourceColumn');
+        const targetColumnInput = document.getElementById('targetColumn');
+        const noteColumnInput = document.getElementById('noteColumn');
+        const convertButton = document.getElementById('convertButton');
+        const statusDisplay = document.getElementById('status');
+        const errorMessageDisplay = document.getElementById('errorMessage');
+
+        let parsedData = null; // Variabel untuk menyimpan hasil parsing
+
+        // Tambahkan event listener
+        fileInput.addEventListener('change', handleFile);
+        convertButton.addEventListener('click', convertToXliff);
+
+        // Fungsi untuk menampilkan pesan error
+        function displayError(message) {
+            errorMessageDisplay.textContent = message;
+            errorMessageDisplay.style.display = 'block'; // Tampilkan elemen error
+            statusDisplay.textContent = ''; // Kosongkan status jika ada error
+        }
+
+        // Fungsi untuk membersihkan pesan error
+        function clearError() {
+            errorMessageDisplay.textContent = '';
+            errorMessageDisplay.style.display = 'none'; // Sembunyikan elemen error
+        }
+
+        // Fungsi untuk menangani pemilihan file
+        function handleFile(event) {
+            const file = event.target.files[0];
+            convertButton.disabled = true; // Nonaktifkan tombol konversi saat file baru dipilih
+            parsedData = null; // Reset data yang sudah diparsing
+            clearError(); // Bersihkan pesan error sebelumnya
+            statusDisplay.textContent = ''; // Bersihkan status sebelumnya
+
+            if (file) {
+                statusDisplay.textContent = `Memproses file: ${file.name}...`;
+                console.log(`Memulai parsing file: ${file.name}, Tipe: ${file.type}, Ukuran: ${file.size} bytes`);
+
+                // Periksa apakah library PapaParse sudah termuat
+                if (typeof Papa === 'undefined') {
+                    displayError('Error: Library PapaParse tidak termuat. Periksa koneksi internet Anda, coba nonaktifkan AdBlocker, atau periksa konsol browser (F12) untuk detail.');
+                    console.error("PapaParse library is not loaded. Pastikan script tag sudah benar dan tidak diblokir.");
+                    return;
+                }
+
+                try {
+                    // Mulai parsing file menggunakan PapaParse
+                    Papa.parse(file, {
+                        header: true, // Anggap baris pertama sebagai header
+                        skipEmptyLines: true, // Lewati baris kosong
+                        dynamicTyping: true, // Secara otomatis mengkonversi tipe data (angka, boolean, dll.)
+                        complete: function(results) { // Callback setelah parsing selesai
+                            console.log("Papa.parse complete. Results:", JSON.stringify(results, null, 2)); // Log hasil parsing
+                            parsedData = results.data; // Simpan data hasil parsing
+
+                            // Periksa apakah ada error dari PapaParse
+                            if (results.errors && results.errors.length > 0) {
+                                let errorMessages = results.errors.map(e => `Baris ${e.row + (results.meta.header ? 2 : 1)}: ${e.message} (${e.code})`).join('\n');
+                                displayError('Error saat parsing file CSV/TSV:\n' + errorMessages);
+                                console.error("Parsing errors from PapaParse:", results.errors);
+                                parsedData = null; // Pastikan data null jika ada error
+                                return;
+                            }
+
+                            // Periksa jika parsedData null atau undefined (seharusnya tidak terjadi jika 'complete' dipanggil tanpa error)
+                            if (!parsedData) {
+                                displayError('Gagal memproses file: parser tidak menghasilkan data.');
+                                console.error("Parsing menghasilkan data null/undefined meskipun tidak ada error eksplisit dari PapaParse.");
+                                return;
+                            }
+
+                            // Periksa jika file kosong (tidak ada baris data setelah header)
+                            if (parsedData.length === 0) {
+                                 displayError('File kosong atau tidak mengandung baris data setelah header. Tidak ada yang bisa dikonversi.');
+                                 console.log("Parsed data adalah array kosong (tidak ada baris data).");
+                                 return;
+                            }
+
+                            // Periksa apakah baris pertama dari data adalah objek yang valid (menandakan header berhasil diparsing)
+                            if (typeof parsedData[0] !== 'object' || parsedData[0] === null) {
+                                displayError('Format data setelah parsing tidak sesuai (baris pertama bukan objek). Periksa struktur file CSV/TSV Anda, pastikan ada header.');
+                                console.error("Baris pertama dari parsed data bukanlah objek:", parsedData[0]);
+                                return;
+                            }
+
+                            const headers = Object.keys(parsedData[0]); // Dapatkan nama-nama header
+                            console.log("Header terdeteksi:", headers);
+
+                            // Periksa jika header kosong meskipun ada data (kasus aneh)
+                            if (headers.length === 0 && parsedData.length > 0) {
+                                displayError('Tidak ada header yang terdeteksi atau baris pertama tidak menghasilkan kolom. Pastikan file CSV/TSV Anda memiliki baris header yang benar.');
+                                console.warn("Header kosong meskipun ada data. Kemungkinan file tidak memiliki header atau formatnya salah.");
+                                return;
+                            }
+
+                            // Jika semua pemeriksaan lolos
+                            statusDisplay.textContent = `File berhasil diproses. Header terdeteksi: ${headers.join(', ')}. Jumlah baris data: ${parsedData.length}. Siap untuk dikonversi.`;
+                            clearError(); // Bersihkan pesan error jika parsing sukses
+                            convertButton.disabled = false; // Aktifkan tombol konversi
+                        },
+                        error: function(error, file) { // Callback jika terjadi error global saat parsing
+                            displayError('Gagal memuat atau mem-parsing file: ' + error.message);
+                            console.error("Papa.parse global error:", error);
+                            parsedData = null;
+                        }
+                    });
+                } catch (e) { // Tangkap error tak terduga selama pemanggilan Papa.parse
+                    displayError('Terjadi error tak terduga saat mencoba mem-parsing file: ' + e.message);
+                    console.error("Error selama pemanggilan Papa.parse (try-catch block):", e);
+                }
+            } else {
+                statusDisplay.textContent = 'Tidak ada file yang dipilih.';
+            }
+        }
+
+        // Fungsi untuk melakukan escape pada karakter XML
+        function escapeXml(unsafe) {
+            if (typeof unsafe !== 'string') {
+                if (unsafe === null || typeof unsafe === 'undefined') return ''; // Kembalikan string kosong jika null atau undefined
+                return String(unsafe); // Konversi angka atau boolean ke string
+            }
+            return unsafe.replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+                return c; // Seharusnya tidak pernah tercapai
+            });
+        }
+
+        // Fungsi untuk mengkonversi data ke format XLIFF
+        function convertToXliff() {
+            if (!parsedData || parsedData.length === 0) {
+                displayError("Tidak ada data untuk dikonversi. Silakan pilih dan proses file yang valid terlebih dahulu.");
+                return;
+            }
+
+            // Ambil nilai-nilai dari input pengguna
+            const sourceLang = escapeXml(sourceLangInput.value.trim()) || 'en';
+            const targetLang = escapeXml(targetLangInput.value.trim()) || 'id';
+            const idColumn = idColumnInput.value.trim();
+            const sourceColumn = sourceColumnInput.value.trim();
+            const targetColumn = targetColumnInput.value.trim();
+            const noteColumn = noteColumnInput.value.trim(); // Bisa kosong
+            const outputFileName = outputFileNameInput.value.trim() || 'translation';
+
+            // Validasi kolom wajib
+            if (!idColumn || !sourceColumn ) {
+                displayError("Nama kolom untuk 'ID Unit' dan 'Teks Sumber' harus diisi.");
+                return;
+            }
+
+            // Validasi apakah kolom yang ditentukan ada di data (berdasarkan header dari objek pertama)
+            if (parsedData.length > 0) {
+                const firstRow = parsedData[0];
+                if (!(idColumn in firstRow)) {
+                    displayError(`Kolom '${idColumn}' (untuk ID Unit) tidak ditemukan di header file. Header yang ada: ${Object.keys(firstRow).join(', ')}`);
+                    return;
+                }
+                if (!(sourceColumn in firstRow)) {
+                    displayError(`Kolom '${sourceColumn}' (untuk Teks Sumber) tidak ditemukan di header file. Header yang ada: ${Object.keys(firstRow).join(', ')}`);
+                    return;
+                }
+                // Kolom target dan note bersifat opsional, jika tidak ada di file, akan menghasilkan target/note kosong di XLIFF
+                if (targetColumn && !(targetColumn in firstRow)) {
+                    statusDisplay.textContent = `Info: Kolom target '${targetColumn}' tidak ditemukan di file, akan menggunakan target kosong.`;
+                }
+                if (noteColumn && !(noteColumn in firstRow)) {
+                    statusDisplay.textContent = `Info: Kolom catatan '${noteColumn}' tidak ditemukan di file, catatan akan diabaikan.`;
+                }
+            }
+
+            // Mulai membuat konten XLIFF
+            let xliffContent = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+            xliffContent += `<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">\n`;
+            xliffContent += `  <file original="${escapeXml(fileInput.files[0].name)}" source-language="${sourceLang}" target-language="${targetLang}" datatype="plaintext">\n`;
+            xliffContent += `    <body>\n`;
+
+            // Iterasi setiap baris data yang sudah diparsing
+            parsedData.forEach((row, index) => {
+                const unitId = escapeXml(row[idColumn] !== undefined && row[idColumn] !== null ? row[idColumn] : `unit_${index + 1}`);
+                const sourceText = escapeXml(row[sourceColumn]);
+                const targetText = targetColumn && row[targetColumn] !== undefined ? escapeXml(row[targetColumn]) : '';
+                const noteText = noteColumn && row[noteColumn] !== undefined ? escapeXml(row[noteColumn]) : '';
+
+                xliffContent += `      <trans-unit id="${unitId}">\n`;
+                xliffContent += `        <source>${sourceText}</source>\n`;
+                xliffContent += `        <target>${targetText}</target>\n`;
+                if (noteText) {
+                    xliffContent += `        <note>${noteText}</note>\n`;
+                }
+                xliffContent += `      </trans-unit>\n`;
+            });
+
+            xliffContent += `    </body>\n`;
+            xliffContent += `  </file>\n`;
+            xliffContent += `</xliff>`;
+
+            // Unduh file XLIFF
+            downloadFile(xliffContent, `${outputFileName}.xlf`, 'application/xliff+xml');
+            statusDisplay.textContent = `File XLIFF (${outputFileName}.xlf) berhasil dibuat dan diunduh. Jumlah unit: ${parsedData.length}.`;
+            clearError(); // Bersihkan pesan error jika konversi berhasil
+        }
+
+        // Fungsi untuk mengunduh file
+        function downloadFile(content, fileName, contentType) {
+            const a = document.createElement('a');
+            const file = new Blob([content], { type: contentType });
+            a.href = URL.createObjectURL(file);
+            a.download = fileName;
+            document.body.appendChild(a); // Diperlukan untuk Firefox agar unduhan berfungsi
+            a.click(); // Simulasikan klik untuk memulai unduhan
+            document.body.removeChild(a); // Hapus elemen anchor setelahnya
+            URL.revokeObjectURL(a.href); // Bebaskan memori
+        }
+
+    </script>
+</body>
+</html>
