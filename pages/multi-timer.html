@@ -326,7 +326,7 @@
             }
             if (activeTimerData) {
                 const formattedTimeForTab = formatTimeForTab(activeTimerData.elapsedTime);
-                document.title = `[${activeTimerTitle}] ${formattedTimeForTab} - ${originalPageTitle}`;
+                document.title = `${formattedTimeForTab} [${activeTimerTitle}] - ${originalPageTitle}`;
                 if (!tabUpdateInterval) {
                     tabUpdateInterval = setInterval(manageTabTitleUpdate, 500);
                 }
