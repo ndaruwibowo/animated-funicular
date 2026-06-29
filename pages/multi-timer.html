@@ -434,7 +434,7 @@
                 <div class="timer-start-time">Mulai: <span class="start-time-display">Belum dimulai</span></div>
                 <div class="timer-elapsed-time">Durasi: <span class="elapsed-time-display">00:00.00</span></div>
                 <div class="timer-controls">
-                    <button class="start-btn" title="Keyboard: M">Mulai<span class="keybind">M</span></button>
+                    <button class="start-btn" title="Keyboard: S">Mulai<span class="keybind">S</span></button>
                     <button class="stop-btn" disabled title="Keyboard: Space">Berhenti<span class="keybind">Space</span></button>
                     <button class="reset-btn" title="Keyboard: R">Reset<span class="keybind">R</span></button>
                     <button class="remove-btn">Hapus</button>
@@ -541,8 +541,8 @@
             const timer = timers[focusedTimerId];
             const { startBtn, stopBtn, resetBtn } = timer.buttons;
 
-            // M key for Start
-            if (e.key.toLowerCase() === 'm' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            // S key for Start
+            if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 if (!startBtn.disabled) {
                     startBtn.click();
                     e.preventDefault();
