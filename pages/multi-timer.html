@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="icon" type="image/x-icon" href="/res/favicon.png">
     <title>Multi Timer</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%2032%2032%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M16%204a1%201%200%2000-1%201v1H11a1%201%200%20000%202h1v1a1%201%200%20002%200V8h4v2a1%201%200%20002%200V8h1a1%201%200%20000-2h-1V5a1%201%200%2000-1-1zm-3%207a9%209%200%201018%200%209%209%200%2000-18%200zm2%200a7%207%200%201114%200%207%207%200%2001-14%200zm6-3a1%201%200%2000-1%201v3.268l-2.646%201.323a1%201%200%2010.894%201.789L19%2017.132V12a1%201%200%2000-1-1z%27%20fill%3D%27%23000000%27%2F%3E%3C%2Fsvg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20viewBox%3D%270%200%2032%2032%27%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%3E%3Cpath%20d%3D%27M16%204a1%201%200%2000-1%201v1H11a1%201%200%2000-1%201v2H9a1%201%200%2000-1%201v14a2%202%200%20002%202h14a2%202%200%20002-2V10a1%201%200%2000-1-1h-1V6a1%201%200%2000-1-1h-4V5a1%201%200%2000-1-1zm0%202h2v1h-2zm-5%206v3h2v-3zm4%200v3h2v-3zm4%200v3h2v-3z%27%20fill%3D%27%23555%27/%3E%3C/svg%3E" />
     <style>
         html {
             overflow-x: hidden;
@@ -155,9 +155,19 @@
             cursor: pointer;
             font-size: 0.9em;
             transition: background-color 0.2s ease, transform 0.1s ease;
+            position: relative;
         }
         .timer-controls button:active {
             transform: translateY(1px);
+        }
+
+        .timer-controls button .keybind {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            font-size: 0.65em;
+            opacity: 0.7;
+            font-weight: normal;
         }
 
         .start-btn { background-color: #2ecc71; color: white; }
@@ -283,6 +293,7 @@
         const exportCsvBtn = document.getElementById('export-csv-btn');
         let timerIdCounter = 0;
         let timers = {};
+        let focusedTimerId = null;
 
         const originalPageTitle = document.title;
         let tabUpdateInterval = null;
@@ -423,15 +434,20 @@
                 <div class="timer-start-time">Mulai: <span class="start-time-display">Belum dimulai</span></div>
                 <div class="timer-elapsed-time">Durasi: <span class="elapsed-time-display">00:00.00</span></div>
                 <div class="timer-controls">
-                    <button class="start-btn">Mulai</button>
-                    <button class="stop-btn" disabled>Berhenti</button>
-                    <button class="reset-btn">Reset</button>
+                    <button class="start-btn" title="Keyboard: M">Mulai<span class="keybind">M</span></button>
+                    <button class="stop-btn" disabled title="Keyboard: Space">Berhenti<span class="keybind">Space</span></button>
+                    <button class="reset-btn" title="Keyboard: R">Reset<span class="keybind">R</span></button>
                     <button class="remove-btn">Hapus</button>
                 </div>
             `;
 
             timerRow.addEventListener('dragstart', handleDragStart);
             timerRow.addEventListener('dragend', handleDragEnd);
+
+            // Focus/blur handlers to track focused timer
+            timerRow.addEventListener('mouseenter', () => {
+                focusedTimerId = id;
+            });
 
             const startBtn = timerRow.querySelector('.start-btn');
             const stopBtn = timerRow.querySelector('.stop-btn');
@@ -443,7 +459,8 @@
 
             timers[id] = {
                 startTime: 0, elapsedTime: 0, intervalId: null, isRunning: false,
-                initialStartTimeDisplay: 'Belum dimulai'
+                initialStartTimeDisplay: 'Belum dimulai',
+                buttons: { startBtn, stopBtn, resetBtn }
             };
             startTimeDisplay.textContent = timers[id].initialStartTimeDisplay;
             elapsedTimeDisplay.textContent = formatTime(timers[id].elapsedTime);
@@ -516,6 +533,36 @@
             const timerElement = createTimerRow(newTimerId);
             timersContainer.appendChild(timerElement);
         }
+
+        // Keyboard event listener
+        document.addEventListener('keydown', (e) => {
+            if (focusedTimerId === null || !timers[focusedTimerId]) return;
+
+            const timer = timers[focusedTimerId];
+            const { startBtn, stopBtn, resetBtn } = timer.buttons;
+
+            // M key for Start
+            if (e.key.toLowerCase() === 'm' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                if (!startBtn.disabled) {
+                    startBtn.click();
+                    e.preventDefault();
+                }
+            }
+            // Space key for Stop
+            else if (e.code === 'Space' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                if (!stopBtn.disabled) {
+                    stopBtn.click();
+                    e.preventDefault();
+                }
+            }
+            // R key for Reset
+            else if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                if (!resetBtn.disabled) {
+                    resetBtn.click();
+                    e.preventDefault();
+                }
+            }
+        });
 
         // Fungsi untuk memformat field CSV: hanya mengapit dengan tanda petik jika perlu
         function formatCsvField(field) {
