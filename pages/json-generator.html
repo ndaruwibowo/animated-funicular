@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Folder to JSON Generator</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --primary-hover: #004494;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #cccccc;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            padding: 40px 20px; 
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            padding: 30px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 800px; 
+        }
+
+        h1 {
+            font-size: 1.8em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--text-color);
+        }
+
+        .instruction-box {
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] { 
+            display: block; 
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px dashed var(--border-color);
+            border-radius: 4px;
+            background-color: #fafafa;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+
+        button { 
+            padding: 10px 15px; 
+            background: var(--primary-color); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        button:disabled { 
+            background: #999999; 
+            cursor: not-allowed; 
+        }
+
+        pre { 
+            background: #2b2b2b; 
+            color: #f8f8f2; 
+            padding: 15px; 
+            border-radius: 4px; 
+            max-height: 350px; 
+            overflow-y: auto; 
+            font-family: Consolas, monospace;
+            font-size: 0.9em;
+            border: 1px solid #1a1a1a;
+        }
+        
+        pre::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        pre::-webkit-scrollbar-thumb {
+            background: #555; 
+            border-radius: 4px;
+        }
+
+        /* Gaya untuk Floating Button */
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px; /* Diubah dari right menjadi left */
+            background-color: var(--primary-color);
+            color: #ffffff;
+            padding: 12px 24px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 1000;
+        }
+
+        .floating-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Generator JSON dari Struktur Folder</h1>
+        
+        <div class="instruction-box">
+            <p><strong>Petunjuk Penggunaan:</strong></p>
+            <ol>
+                <li>Klik tombol <strong>Choose Files</strong> di bawah ini.</li>
+                <li>Pilih folder dari perangkat Anda (semua sub-folder akan ikut terbaca).</li>
+                <li>Tunggu hingga sistem selesai memetakan struktur file ke dalam format JSON.</li>
+                <li>Klik tombol <strong>Download JSON</strong> untuk menyimpan hasilnya secara lokal.</li>
+            </ol>
+        </div>
+        
+        <div class="form-group">
+            <input type="file" id="folderInput" webkitdirectory directory multiple />
+            <button id="downloadBtn" disabled>Download JSON</button>
+        </div>
+        
+        <h2>Preview JSON:</h2>
+        <pre id="preview">Belum ada folder yang dipilih.</pre>
+    </div>
+
+    <!-- Floating Button yang mengarah ke halaman utama -->
+    <a href="https://work.ndaruwibowo.my.id" class="floating-btn">Ke halaman utama</a>
+
+    <script>
+        let generatedJson = null;
+
+        document.getElementById('folderInput').addEventListener('change', function(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            const tree = {};
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const parts = file.webkitRelativePath.split('/');
+                let current = tree;
+
+                for (let j = 0; j < parts.length; j++) {
+                    const part = parts[j];
+                    if (j === parts.length - 1) {
+                        current[part] = { 
+                            type: 'file', 
+                            size: file.size, 
+                            lastModified: file.lastModified 
+                        };
+                    } else {
+                        if (!current[part]) {
+                            current[part] = {};
+                        }
+                        current = current[part];
+                    }
+                }
+            }
+
+            generatedJson = JSON.stringify(tree, null, 2);
+            document.getElementById('preview').textContent = generatedJson;
+            document.getElementById('downloadBtn').disabled = false;
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            if (!generatedJson) return;
+            
+            const blob = new Blob([generatedJson], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'struktur_folder.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    </script>
+</body>
+</html>

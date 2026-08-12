@@ -18,5 +18,10 @@
     "file": "pages/tsv_csv_xliff.html",
     "judul": "Konverter TSV/CSV ke XLIFF 1.2",
     "deskripsi": "Konverter tsv/csv ke XLIFF untuk memudahkan penerjemahan."
+  },
+  {
+    "file": "pages/json-generator.html",
+    "judul": "Folder to JSON Generator",
+    "deskripsi": "Generator JSON dari Struktur Folder."
   }
 ]
