@@ -23,46 +23,42 @@
 
         body::before {
             content: "";
-            position: fixed; /* Tetap di viewport, tidak ikut scroll */
+            position: fixed;
             left: -50%; 
             top: -50%;
             width: 200%; 
             height: 200%;
-            z-index: -1; /* Letakkan di belakang semua konten lain */
+            z-index: -1;
             
             background-image: url('/res/logo-transkomunika1662368610.png');
-            /* Ukuran asli gambar: 200x58px. Spasi contoh: 80px horizontal, 100px vertikal */
             background-size: 200px;
             background-repeat: repeat; 
-            
-            transform: rotate(45deg); /* Rotasi 45 derajat sesuai permintaan */
-            
-            opacity: 0.15; /* Sesuaikan opasitas watermark (0.05 - 0.15) */
-            pointer-events: none; /* Pastikan latar belakang tidak menangkap event mouse */
+            transform: rotate(45deg);
+            opacity: 0.15;
+            pointer-events: none;
         }
 		
-		        /* Tombol Floating */
         .floating-button {
-            position: fixed; /* Tetap di posisi yang sama saat scroll */
-            bottom: 20px; /* Jarak dari bawah */
-            left: 20px; /* Jarak dari kiri */
-            background-color: #007bff; /* Warna latar tombol */
-            color: white; /* Warna teks */
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #007bff;
+            color: white;
             padding: 12px 18px;
-            border-radius: 30px; /* Membuatnya lebih bulat */
+            border-radius: 30px;
             text-decoration: none;
             font-size: 1em;
             font-weight: bold;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            z-index: 1000; /* Memastikan tombol di atas elemen lain */
+            z-index: 1000;
             transition: background-color 0.3s ease, transform 0.2s ease;
         }
         .floating-button:hover {
-            background-color: #0056b3; /* Warna saat hover */
-            transform: translateY(-2px); /* Sedikit naik saat hover */
+            background-color: #0056b3;
+            transform: translateY(-2px);
         }
         .floating-button:active {
-            transform: translateY(0px); /* Kembali ke posisi semula saat diklik */
+            transform: translateY(0px);
         }
 
         .container {
@@ -76,6 +72,13 @@
             z-index: 1;
         }
 
+        .app-version {
+            text-align: center;
+            margin-top: 15px;
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
         h1 {
             text-align: center;
             color: #2c3e50;
@@ -87,10 +90,16 @@
             align-items: center;
             padding: 18px 10px;
             border-bottom: 1px solid #e9ecef;
+            border-left: 4px solid transparent;
             gap: 15px;
             position: relative;
             background-color: #fff;
-            transition: opacity 0.2s ease, background-color 0.2s ease;
+            transition: opacity 0.2s ease, background-color 0.2s ease, border-left-color 0.2s ease;
+        }
+
+        .timer-row.active {
+            background-color: #f0f7ff;
+            border-left-color: #007bff;
         }
 
         .timer-row:last-child {
@@ -187,6 +196,14 @@
             margin-top: 40px;
             padding-top: 30px;
             border-top: 1px solid #e9ecef;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .actions-left, .actions-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .actions-container button {
@@ -205,6 +222,8 @@
         #add-timer-btn:hover { background-color: #0056b3; }
         #export-csv-btn { background-color: #17a2b8; color: white; }
         #export-csv-btn:hover { background-color: #117a8b; }
+        #import-csv-btn { background-color: #6c757d; color: white; }
+        #import-csv-btn:hover { background-color: #5a6268; }
 
         .timer-row.dragging {
             opacity: 0.4;
@@ -259,6 +278,10 @@
                 gap: 15px;
                 align-items: stretch;
             }
+            .actions-left, .actions-right {
+                flex-direction: column;
+                width: 100%;
+            }
             .actions-container button { width: 100%; }
         }
         @media (max-width: 480px) {
@@ -283,15 +306,26 @@
         <div id="timers-container">
             </div>
         <div class="actions-container">
-            <button id="add-timer-btn">Tambah Timer Baru</button>
-            <button id="export-csv-btn">Ekspor ke CSV</button>
+            <div class="actions-left">
+                <button id="add-timer-btn">Tambah Timer Baru</button>
+            </div>
+            <div class="actions-right">
+                <button id="import-csv-btn">Impor dari CSV</button>
+                <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                <button id="export-csv-btn">Ekspor ke CSV</button>
+            </div>
         </div>
+        <div class="app-version">Multi Timer v1.2.0</div>
     </div>
 
     <script>
+        const CURRENT_VERSION = 'v1.2.0';
         const timersContainer = document.getElementById('timers-container');
         const addTimerBtn = document.getElementById('add-timer-btn');
         const exportCsvBtn = document.getElementById('export-csv-btn');
+        const importCsvBtn = document.getElementById('import-csv-btn');
+        const csvFileInput = document.getElementById('csv-file-input');
+
         let timerIdCounter = 0;
         let timers = {};
         let focusedTimerId = null;
@@ -352,6 +386,37 @@
             }
         }
 
+        function updateActiveTimerHighlight() {
+            document.querySelectorAll('.timer-row').forEach(row => {
+                const timerId = parseInt(row.dataset.timerId);
+                if (timerId === focusedTimerId) {
+                    row.classList.add('active');
+                } else {
+                    row.classList.remove('active');
+                }
+            });
+        }
+
+        function saveStateToLocalStorage() {
+            const timerRows = timersContainer.querySelectorAll('.timer-row');
+            const stateToSave = [];
+            timerRows.forEach(rowElement => {
+                const id = parseInt(rowElement.dataset.timerId);
+                const timerData = timers[id];
+                if (timerData) {
+                    const titleInput = rowElement.querySelector('.timer-title input');
+                    stateToSave.push({
+                        id: id,
+                        title: titleInput ? titleInput.value : `Timer ${id + 1}`,
+                        elapsedTime: timerData.elapsedTime,
+                        initialStartTimeDisplay: timerData.initialStartTimeDisplay
+                    });
+                }
+            });
+            localStorage.setItem('multi_timers_state', JSON.stringify(stateToSave));
+            localStorage.setItem('multi_timers_counter', timerIdCounter);
+        }
+
         function handleDragStart(e) {
             draggedItem = this;
             e.dataTransfer.setData('text/plain', this.dataset.timerId);
@@ -371,6 +436,7 @@
                 row.classList.remove('drag-over-placeholder');
             });
             draggedItem = null;
+            saveStateToLocalStorage();
         }
         
         function getDragAfterElement(container, y) {
@@ -407,6 +473,7 @@
                     timersContainer.insertBefore(draggedItem, afterElement);
                 }
             }
+            saveStateToLocalStorage();
             
             let shouldUpdateTitle = false;
             const currentRunningTimersOrder = Array.from(timersContainer.querySelectorAll('.timer-row'))
@@ -421,19 +488,23 @@
             }
         });
 
-        function createTimerRow(id) {
+        function createTimerRow(id, initialData = {}) {
             const timerRow = document.createElement('div');
             timerRow.classList.add('timer-row');
             timerRow.dataset.timerId = id;
             timerRow.setAttribute('draggable', 'true');
 
+            const defaultTitle = initialData.title || `Timer ${id + 1}`;
+            const initialElapsedTime = initialData.elapsedTime || 0;
+            const initialStartDisplay = initialData.initialStartTimeDisplay || 'Belum dimulai';
+
             timerRow.innerHTML = `
                 <div class="drag-handle" title="Geser untuk urutkan">&#x283F;</div>
                 <div class="timer-title">
-                    <input type="text" placeholder="Judul Timer ${id + 1}" value="Timer ${id + 1}">
+                    <input type="text" placeholder="Judul Timer ${id + 1}" value="${defaultTitle}">
                 </div>
-                <div class="timer-start-time">Mulai: <span class="start-time-display">Belum dimulai</span></div>
-                <div class="timer-elapsed-time">Durasi: <span class="elapsed-time-display">00:00.00</span></div>
+                <div class="timer-start-time">Mulai: <span class="start-time-display">${initialStartDisplay}</span></div>
+                <div class="timer-elapsed-time">Durasi: <span class="elapsed-time-display">${formatTime(initialElapsedTime)}</span></div>
                 <div class="timer-controls">
                     <button class="start-btn" title="Keyboard: S">Mulai<span class="keybind">S</span></button>
                     <button class="stop-btn" disabled title="Keyboard: Space">Berhenti<span class="keybind">Space</span></button>
@@ -445,9 +516,14 @@
             timerRow.addEventListener('dragstart', handleDragStart);
             timerRow.addEventListener('dragend', handleDragEnd);
 
-            // Focus/blur handlers to track focused timer
             timerRow.addEventListener('mouseenter', () => {
                 focusedTimerId = id;
+                updateActiveTimerHighlight();
+            });
+
+            timerRow.addEventListener('click', () => {
+                focusedTimerId = id;
+                updateActiveTimerHighlight();
             });
 
             const startBtn = timerRow.querySelector('.start-btn');
@@ -459,22 +535,25 @@
             const titleInput = timerRow.querySelector('.timer-title input');
 
             timers[id] = {
-                startTime: 0, elapsedTime: 0, intervalId: null, isRunning: false,
-                initialStartTimeDisplay: 'Belum dimulai',
+                startTime: 0, elapsedTime: initialElapsedTime, intervalId: null, isRunning: false,
+                initialStartTimeDisplay: initialStartDisplay,
                 buttons: { startBtn, stopBtn, resetBtn }
             };
-            startTimeDisplay.textContent = timers[id].initialStartTimeDisplay;
-            elapsedTimeDisplay.textContent = formatTime(timers[id].elapsedTime);
+            
+            if (initialElapsedTime > 0 && initialStartDisplay !== 'Belum dimulai') {
+                resetBtn.disabled = false;
+            }
 
             titleInput.addEventListener('input', () => {
                 if (timers[id] && timers[id].isRunning) {
                     manageTabTitleUpdate();
                 }
+                saveStateToLocalStorage();
             });
 
             startBtn.addEventListener('click', () => {
                 if (!timers[id].isRunning) {
-                    if (timers[id].elapsedTime === 0) {
+                    if (timers[id].elapsedTime === 0 || timers[id].initialStartTimeDisplay === 'Belum dimulai') {
                         timers[id].initialStartTimeDisplay = getCurrentTimestamp();
                         startTimeDisplay.textContent = timers[id].initialStartTimeDisplay;
                     }
@@ -482,13 +561,15 @@
                     timers[id].intervalId = setInterval(() => {
                         timers[id].elapsedTime = Date.now() - timers[id].startTime;
                         elapsedTimeDisplay.textContent = formatTime(timers[id].elapsedTime);
+                        saveStateToLocalStorage();
                     }, 10);
                     timers[id].isRunning = true;
                     startBtn.disabled = true;
-                    startBtn.textContent = 'Jalan';
+                    startBtn.innerHTML = 'Jalan<span class="keybind">S</span>';
                     stopBtn.disabled = false;
                     resetBtn.disabled = true;
                     manageTabTitleUpdate();
+                    saveStateToLocalStorage();
                 }
             });
 
@@ -497,10 +578,11 @@
                     clearInterval(timers[id].intervalId);
                     timers[id].isRunning = false;
                     startBtn.disabled = false;
-                    startBtn.textContent = 'Mulai';
+                    startBtn.innerHTML = 'Mulai<span class="keybind">S</span>';
                     stopBtn.disabled = true;
                     resetBtn.disabled = false;
                     manageTabTitleUpdate();
+                    saveStateToLocalStorage();
                 }
             });
 
@@ -512,10 +594,11 @@
                 elapsedTimeDisplay.textContent = formatTime(0);
                 startTimeDisplay.textContent = timers[id].initialStartTimeDisplay;
                 startBtn.disabled = false;
-                startBtn.textContent = 'Mulai';
+                startBtn.innerHTML = 'Mulai<span class="keybind">S</span>';
                 stopBtn.disabled = true;
                 resetBtn.disabled = true;
                 manageTabTitleUpdate();
+                saveStateToLocalStorage();
             });
 
             removeBtn.addEventListener('click', () => {
@@ -523,40 +606,83 @@
                 delete timers[id];
                 timerRow.remove();
                 manageTabTitleUpdate();
+                saveStateToLocalStorage();
+                if (focusedTimerId === id) {
+                    focusedTimerId = null;
+                    updateActiveTimerHighlight();
+                }
             });
 
-            resetBtn.disabled = true;
             return timerRow;
         }
 
-        function addTimer() {
+        function addTimer(initialData = {}) {
             const newTimerId = timerIdCounter++;
-            const timerElement = createTimerRow(newTimerId);
+            const timerElement = createTimerRow(newTimerId, initialData);
             timersContainer.appendChild(timerElement);
+            saveStateToLocalStorage();
+            if (focusedTimerId === null) {
+                focusedTimerId = newTimerId;
+                updateActiveTimerHighlight();
+            }
         }
 
-        // Keyboard event listener
+        function loadStateFromLocalStorage() {
+            const savedState = localStorage.getItem('multi_timers_state');
+            const savedCounter = localStorage.getItem('multi_timers_counter');
+
+            if (savedCounter) {
+                timerIdCounter = parseInt(savedCounter, 10) || 0;
+            }
+
+            if (savedState) {
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    if (Array.isArray(parsedState) && parsedState.length > 0) {
+                        parsedState.forEach(item => {
+                            const timerElement = createTimerRow(item.id, item);
+                            timersContainer.appendChild(timerElement);
+                            if (item.id >= timerIdCounter) {
+                                timerIdCounter = item.id + 1;
+                            }
+                        });
+                        const firstRow = timersContainer.querySelector('.timer-row');
+                        if (firstRow) {
+                            focusedTimerId = parseInt(firstRow.dataset.timerId, 10);
+                            updateActiveTimerHighlight();
+                        }
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Gagal memuat state dari localStorage:', e);
+                }
+            }
+            addTimer();
+        }
+
         document.addEventListener('keydown', (e) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
+                return;
+            }
+
             if (focusedTimerId === null || !timers[focusedTimerId]) return;
 
             const timer = timers[focusedTimerId];
             const { startBtn, stopBtn, resetBtn } = timer.buttons;
 
-            // S key for Start
             if (e.key.toLowerCase() === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 if (!startBtn.disabled) {
                     startBtn.click();
                     e.preventDefault();
                 }
             }
-            // Space key for Stop
             else if (e.code === 'Space' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 if (!stopBtn.disabled) {
                     stopBtn.click();
                     e.preventDefault();
                 }
             }
-            // R key for Reset
             else if (e.key.toLowerCase() === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
                 if (!resetBtn.disabled) {
                     resetBtn.click();
@@ -565,20 +691,19 @@
             }
         });
 
-        // Fungsi untuk memformat field CSV: hanya mengapit dengan tanda petik jika perlu
         function formatCsvField(field) {
             const fieldStr = String(field);
-            // Periksa apakah field mengandung koma, tanda petik ganda, atau karakter baris baru
             if (fieldStr.includes('"') || fieldStr.includes(',') || fieldStr.includes('\n') || fieldStr.includes('\r')) {
-                // Ganti tanda petik ganda internal dengan dua tanda petik ganda, lalu apit seluruh field
                 return `"${fieldStr.replace(/"/g, '""')}"`;
             }
-            // Jika tidak ada karakter khusus, kembalikan field apa adanya
             return fieldStr;
         }
 
         function exportToCsv() {
-            const rows = [['Judul Timer', 'Waktu Mulai', 'Durasi (MM:SS.ms)']];
+            const rows = [
+                ['#version', CURRENT_VERSION],
+                ['Judul Timer', 'Waktu Mulai', 'Durasi (MM:SS.ms)']
+            ];
             timersContainer.querySelectorAll('.timer-row').forEach(rowElement => {
                 const timerId = parseInt(rowElement.dataset.timerId);
                 const timerData = timers[timerId];
@@ -590,28 +715,134 @@
                 }
             });
 
-            let csvContent = "data:text/csv;charset=utf-8,";
+            let csvContent = "";
             rows.forEach(rowArray => {
-                // Gunakan formatCsvField untuk setiap field
                 let row = rowArray.map(field => formatCsvField(field)).join(",");
                 csvContent += row + "\r\n";
             });
 
-            const encodedUri = encodeURI(csvContent);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
+            link.setAttribute("href", url);
+            
             const now = new Date();
             const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
-            link.setAttribute("download", `timers_export_${timestamp}.csv`);
+            // Diubah dari timers_export_timestamp menjadi multitimer_dataset_timestamp
+            link.setAttribute("download", `multitimer_dataset_${timestamp}.csv`);
+            
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
-        addTimerBtn.addEventListener('click', addTimer);
-        exportCsvBtn.addEventListener('click', exportToCsv);
+        function parseCsvLine(text) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"') {
+                    if (inQuotes && text[i + 1] === '"') {
+                        current += '"';
+                        i++;
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
 
-        addTimer();
+        function parseDurationToMs(durationStr) {
+            const parts = durationStr.split(':');
+            if (parts.length !== 2) return 0;
+            const minutes = parseInt(parts[0], 10) || 0;
+            const secParts = parts[1].split('.');
+            const seconds = parseInt(secParts[0], 10) || 0;
+            const ms = secParts[1] ? parseInt(secParts[1].padEnd(3, '0'), 10) : 0;
+            return (minutes * 60 * 1000) + (seconds * 1000) + ms;
+        }
+
+        function importFromCsv(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r\n|\n/);
+                
+                if (lines.length <= 1) {
+                    alert('File CSV kosong atau tidak valid.');
+                    return;
+                }
+
+                let startIndex = 0;
+                let fileVersion = 'v1.0.0 (legacy)';
+
+                const firstLineFields = parseCsvLine(lines[0].trim());
+                if (firstLineFields[0] === '#version' || firstLineFields[0] === 'Version') {
+                    fileVersion = firstLineFields[1] || 'v1.0.0';
+                    startIndex = 1;
+                }
+
+                if (startIndex < lines.length) {
+                    const headerFields = parseCsvLine(lines[startIndex].trim());
+                    if (headerFields[0] === 'Judul Timer') {
+                        startIndex++;
+                    }
+                }
+
+                if (fileVersion !== CURRENT_VERSION) {
+                    alert(`Perhatian: File CSV yang Anda impor menggunakan versi (${fileVersion}), sedangkan versi saat ini adalah ${CURRENT_VERSION}.\nTerdeteksi potensi perubahan format atau struktur pengurutan data. Data akan diperbarui dan disesuaikan ke versi ${CURRENT_VERSION}.`);
+                }
+
+                Object.keys(timers).forEach(id => {
+                    clearInterval(timers[id].intervalId);
+                });
+                timers = {};
+                timersContainer.innerHTML = '';
+                focusedTimerId = null;
+
+                for (let i = startIndex; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+
+                    const fields = parseCsvLine(line);
+                    if (fields.length >= 3) {
+                        const title = fields[0];
+                        const startTimeDisplay = fields[1];
+                        const durationStr = fields[2];
+                        const elapsedTime = parseDurationToMs(durationStr);
+
+                        addTimer({
+                            title: title,
+                            elapsedTime: elapsedTime,
+                            initialStartTimeDisplay: startTimeDisplay
+                        });
+                    }
+                }
+
+                csvFileInput.value = '';
+                alert(`Data timer berhasil diimpor dan diselaraskan ke versi ${CURRENT_VERSION}!`);
+            };
+            reader.readAsText(file);
+        }
+
+        addTimerBtn.addEventListener('click', () => addTimer());
+        exportCsvBtn.addEventListener('click', exportToCsv);
+        importCsvBtn.addEventListener('click', () => csvFileInput.click());
+        csvFileInput.addEventListener('change', importFromCsv);
+
+        loadStateFromLocalStorage();
         manageTabTitleUpdate();
     </script>
 	<a href="https://work.ndaruwibowo.my.id" class="floating-button">
