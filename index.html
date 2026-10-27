@@ -41,6 +41,74 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
         }
+
+        /* Kontainer Tambahan untuk About Me */
+        .about-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .about-container h2 {
+            font-size: 1.25em;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #1c1e21;
+        }
+
+        /* Foto Profil Melingkar */
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 15px auto;
+            display: block;
+            border: 2px solid #dddfe2;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .about-bio {
+            font-size: 0.95em;
+            color: #4b4f56;
+            line-height: 1.5;
+            max-width: 650px;
+            margin: 0 auto 20px auto;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background-color: #f7f8fa;
+            border: 1px solid #dddfe2;
+            border-radius: 20px;
+            color: #1c1e21;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .social-link:hover {
+            background-color: #e4e6eb;
+            border-color: #bcc0c4;
+            color: #1877f2;
+        }
+
+        .social-link svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
         .file-item {
             margin-bottom: 20px;
             padding: 15px;
@@ -99,6 +167,34 @@
         </div>
     </div>
 
+    <!-- Kontainer About Me -->
+    <div class="container about-container">
+        <h2>About Me</h2>
+        
+        <!-- Foto Profil Melingkar (Ganti path /res/profile.jpg sesuai file Anda) -->
+        <img src="/res/profile.webp" alt="Ndaru Wibowo" class="profile-photo">
+
+        <!-- Teks Bio (Ringkasan 3 Kalimat) -->
+        <p class="about-bio">
+            Hi, I’m Ndaru Wibowo, a virtual assistant with <strong>7+ years of experience</strong> driving project coordination, digital strategy, and operations. I specialize in helping <strong>career and fitness coaches</strong> scale their business through market research, administrative logistics, and targeted lead generation. My tech fluency converts operational bottlenecks into efficient systems <strong>so you can stay focused on transforming your clients' lives</strong>.
+        </p>
+
+        <div class="social-links">
+            <a href="https://instagram.com/ndaru.wibow" target="_blank" rel="noopener noreferrer" class="social-link">
+                <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                <span>Instagram</span>
+            </a>
+            <a href="https://linkedin.com/in/muhammad-ndaru-wibowo" target="_blank" rel="noopener noreferrer" class="social-link">
+                <svg viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                <span>LinkedIn</span>
+            </a>
+            <a href="https://ndaruwibowo.my.id" target="_blank" rel="noopener noreferrer" class="social-link">
+                <svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm1 16.057v-3.057h2.994c-.059 1.143-.212 2.24-.456 3.279-.823-.12-1.674-.196-2.538-.222zm1.843 1.799c-.538.959-1.16 1.8-1.843 2.481v-2.31c.904.029 1.797.108 2.668.237zm-4.843 2.481c-.683-.681-1.305-1.522-1.843-2.481.871-.129 1.764-.208 2.668-.237v2.31zm-1-4.28c-.864.026-1.715.102-2.538.222-.244-1.039-.397-2.136-.456-3.279h2.994v3.057zm0-4.557h-3.116c.066-1.25.253-2.438.544-3.535.808.134 1.666.223 2.572.257v3.278zm1-3.278c.906-.034 1.764-.123 2.572-.257.291 1.097.478 2.285.544 3.535h-3.116v-3.278zm0-1.745v-2.34c.734.724 1.4 1.622 1.969 2.656-.628.106-1.284.172-1.969.184zm-2 0c-.685-.012-1.341-.078-1.969-.184.569-1.034 1.235-1.932 1.969-2.656v2.34zm-4.707 1.905c-.347 1.196-.554 2.485-.604 3.84h-2.544c.339-1.467 1.14-2.766 2.261-3.753.279.03.575.059.887.087zm-2.544 5.34h2.544c.05 1.355.257 2.644.604 3.84-.312.028-.608.057-.887.087-1.121-.987-1.922-2.286-2.261-3.753zm16.502 3.753c-.279-.03-.575-.059-.887-.087.347-1.196.554-2.485.604-3.84h2.544c-.339 1.467-1.14 2.766-2.261 3.753zm2.544-5.34h-2.544c-.05-1.355-.257-2.644-.604-3.84.312-.028.608-.057.887-.087 1.121.987 1.922 2.286 2.261 3.753z"/></svg>
+                <span>Website</span>
+            </a>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const fileListContainer = document.getElementById('fileList');
@@ -138,8 +234,6 @@
                         linkElement.href = item.file;
                         linkElement.textContent = `Buka ${item.judul}`;
                         linkElement.classList.add('button');
-                        // Opsional: buka di tab baru
-                        // linkElement.target = '_blank';
 
                         fileItemDiv.appendChild(titleElement);
                         fileItemDiv.appendChild(descriptionElement);
